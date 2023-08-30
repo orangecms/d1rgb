@@ -201,7 +201,7 @@ fn main() -> ! {
         | (20 << 4)
         // LCD_CTL_REG.LCD_SRC_SEL=000 for Display Engine source.
         // Try 0b001 for color check or 0b111 for grid check.
-        | (0b001 << 0),
+        | (0b000 << 0),
         )
     });
     lcd0.lcd_hv_if_reg.write(|w| unsafe {
