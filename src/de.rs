@@ -119,6 +119,8 @@ pub unsafe fn init(fb: &[u8]) {
     // Set overlay to 272x480
     write_volatile(DE_M0_UI1_SIZE as *mut u32, (271 << 16) | (479 << 0));
 
+    write_volatile(DE_M0_BLD_BK_COLOR as *mut u32, 0x55aa77ee);
+
     // Enable Pipe0, no fill
     write_volatile(DE_M0_BLD_FILL_COLOR_CTL as *mut u32, 1 << 8);
     // Pipe0 Input size 272x480

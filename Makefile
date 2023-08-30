@@ -7,5 +7,10 @@ build:
 
 run: build
 	xfel ddr d1
-	xfel write 0x40000000 out.bin
-	xfel exec 0x40000000
+	xfel write 0x40200000 out.bin
+	xfel exec 0x40200000
+
+run_f133: build
+	xfel ddr f133
+	xfel write 0x40200000 out.bin
+	xfel exec 0x40200000

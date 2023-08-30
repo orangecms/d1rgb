@@ -7,7 +7,7 @@ mod de;
 
 // Not sure if alignment is required or not, but force the issue.
 #[repr(C, align(256))]
-struct FrameBuffer([u8; 3 * 480 * 272]);
+struct FrameBuffer([u8; 3 * 800 * 480]);
 static mut FB: FrameBuffer = FrameBuffer(*include_bytes!("ferris.data"));
 
 struct Uart(d1_pac::UART0);
@@ -106,11 +106,12 @@ fn main() -> ! {
     gpio.pc_cfg0
         .write(|w| w.pc0_select().ledc_do().pc1_select().output());
 
-    // Set PB8 and PB9 to function 6, UART0, internal pullup.
-    gpio.pb_cfg1
-        .write(|w| w.pb8_select().uart0_tx().pb9_select().uart0_rx());
-    gpio.pb_pull0
-        .write(|w| w.pc8_pull().pull_up().pc9_pull().pull_up());
+    // LC tech board and car media player use PE2 and PE3 for UART0
+    // Set GPIO pins to UART0 (function 6), internal pullup.
+    gpio.pe_cfg0
+        .write(|w| w.pe2_select().uart0_tx().pe3_select().uart0_rx());
+    gpio.pe_pull0
+        .write(|w| w.pe2_pull().pull_up().pe3_pull().pull_up());
 
     // Set PD0-21 to LCD functions, and PD22 (LCD backlight PWM) to output.
     gpio.pd_cfg0.write(|w| {
@@ -194,7 +195,7 @@ fn main() -> ! {
         // LCD_CTL_REG.LCD_IF=0 for HV(Sync+DE)
         | (0 << 24)
         // Delay is VT-VD=292-272=20 (ie BP+FP?) (max 30)
-        | (20 << 4)
+        | (16 << 4)
         // LCD_CTL_REG.LCD_SRC_SEL=000 for Display Engine source.
         // Try 0b001 for color check or 0b111 for grid check.
         | (0b000 << 0),
@@ -209,7 +210,7 @@ fn main() -> ! {
     lcd0.lcd_dclk_reg.write(|w| unsafe {
         w.bits(
             // LCD_DCLK_REG.LCD_DCLK_EN=0001 for dclk_en=1, others=0
-            (0b0001 << 28)
+            (0b1000 << 28)
         // Linux just sets bit 31, i.e. 0b1000, which is "reserved" in D1 docs.
         //(1 << 31)
         // LCD_DCLK_REG.LCD_DCLK_DIV=36 for /36 to obtain 9MHz DCLK from 324MHz.
@@ -227,17 +228,17 @@ fn main() -> ! {
     lcd0.lcd_basic1_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC1_REG.HT=530 for 531 horizontal clocks total
-            (530 << 16)
+            (524 << 16)
         // LCD_BASIC1_REG.HBP=42 for 43 Thbp
-        | (42 << 0),
+        | (39 << 0),
         )
     });
     lcd0.lcd_basic2_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC2_REG.VT=584 for 292 vertical rows total
-            (584 << 16)
+            (576 << 16)
         // LCD_BASIC2_REG.VBP=11 for 12 Tvbp
-        | (11 << 0),
+        | (7 << 0),
         )
     });
     lcd0.lcd_basic3_reg.write(|w| unsafe {
