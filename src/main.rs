@@ -5,9 +5,12 @@ use panic_halt as _;
 
 mod de;
 
+const RES_X: u32 = 1024;
+const RES_Y: u32 = 600;
+
 // Not sure if alignment is required or not, but force the issue.
 #[repr(C, align(256))]
-struct FrameBuffer([u8; 3 * 800 * 480]);
+struct FrameBuffer([u8; 3 * RES_X as usize * RES_Y as usize]);
 static mut FB: FrameBuffer = FrameBuffer(*include_bytes!("ferris.data"));
 
 struct Uart(d1_pac::UART0);
@@ -195,10 +198,10 @@ fn main() -> ! {
         // LCD_CTL_REG.LCD_IF=0 for HV(Sync+DE)
         | (0 << 24)
         // Delay is VT-VD=292-272=20 (ie BP+FP?) (max 30)
-        | (16 << 4)
+        | (20 << 4)
         // LCD_CTL_REG.LCD_SRC_SEL=000 for Display Engine source.
         // Try 0b001 for color check or 0b111 for grid check.
-        | (0b000 << 0),
+        | (0b001 << 0),
         )
     });
     lcd0.lcd_hv_if_reg.write(|w| unsafe {
@@ -210,43 +213,37 @@ fn main() -> ! {
     lcd0.lcd_dclk_reg.write(|w| unsafe {
         w.bits(
             // LCD_DCLK_REG.LCD_DCLK_EN=0001 for dclk_en=1, others=0
-            (0b1000 << 28)
+            (0b0001 << 28)
         // Linux just sets bit 31, i.e. 0b1000, which is "reserved" in D1 docs.
-        //(1 << 31)
+        | (1 << 31)
         // LCD_DCLK_REG.LCD_DCLK_DIV=36 for /36 to obtain 9MHz DCLK from 324MHz.
-        | (36 << 0),
+        | (6 << 0),
         )
     });
-    lcd0.lcd_basic0_reg.write(|w| unsafe {
-        w.bits(
-            // LCD_BASIC0_REG.WIDTH_X=479 for 480px wide panel
-            (479 << 16)
-        // LCD_BASIC0_REG.HEIGHT_Y=271 for 272px tall panel
-        | (271 << 0),
-        )
-    });
+    lcd0.lcd_basic0_reg
+        .write(|w| unsafe { w.bits(((RES_X - 1) << 16) | ((RES_Y - 1) << 0)) });
     lcd0.lcd_basic1_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC1_REG.HT=530 for 531 horizontal clocks total
-            (524 << 16)
+            ((RES_X + 48) << 16)
         // LCD_BASIC1_REG.HBP=42 for 43 Thbp
-        | (39 << 0),
+        | (42 << 0),
         )
     });
     lcd0.lcd_basic2_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC2_REG.VT=584 for 292 vertical rows total
-            (576 << 16)
+            (((RES_Y + 15)*2) << 16)
         // LCD_BASIC2_REG.VBP=11 for 12 Tvbp
-        | (7 << 0),
+        | (11 << 0),
         )
     });
     lcd0.lcd_basic3_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC3_REG.HSPW=3 for 4 DCLK wide HSYNC pulse
-            (3 << 16)
+            (9 << 16)
         // LCD_BASIC3_REG.VSPW=3 for 4 row long VSYNC pulse
-        | (3 << 0),
+        | (9 << 0),
         )
     });
     lcd0.lcd_io_tri_reg.write(|w| unsafe {
@@ -268,7 +265,7 @@ fn main() -> ! {
         );
     }
     unsafe { de::init(&FB.0) };
-
+    /*
     // Configure LEDC
     let ledc = &p.LEDC;
     ledc.led_t01_timing_ctrl.write(|w| unsafe {
@@ -304,9 +301,14 @@ fn main() -> ! {
             .msb()
     });
     set_led(ledc, 0x0000_00FF);
-
+    */
     // Blink LED
     loop {
+        unsafe {
+            riscv::asm::delay(100_000_000);
+            println!("...");
+        }
+        /*
         unsafe {
             gpio.pc_dat.write(|w| w.bits(2));
             set_led(ledc, 0x0000FFFF);
@@ -316,6 +318,7 @@ fn main() -> ! {
             set_led(ledc, 0x00FF00FF);
             riscv::asm::delay(100_000_000);
         }
+        */
     }
 }
 
