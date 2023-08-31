@@ -201,49 +201,37 @@ fn main() -> ! {
         | (20 << 4)
         // LCD_CTL_REG.LCD_SRC_SEL=000 for Display Engine source.
         // Try 0b001 for color check or 0b111 for grid check.
-        | (0b000 << 0),
+        | (0b001 << 0),
         )
     });
-    lcd0.lcd_hv_if_reg.write(|w| unsafe {
-        w.bits(
-            // LCD_HV_IF_REG.HV_MODE=0 for 24bit/cycle parallel mode.
-            0 << 28,
-        )
-    });
-    lcd0.lcd_dclk_reg.write(|w| unsafe {
-        w.bits(
-            // LCD_DCLK_REG.LCD_DCLK_EN=0001 for dclk_en=1, others=0
-            (0b0001 << 28)
-        // Linux just sets bit 31, i.e. 0b1000, which is "reserved" in D1 docs.
-        | (1 << 31)
-        // LCD_DCLK_REG.LCD_DCLK_DIV=36 for /36 to obtain 9MHz DCLK from 324MHz.
-        | (6 << 0),
-        )
-    });
+    // LCD_HV_IF_REG.HV_MODE=0 for 24bit/cycle parallel mode.
+    lcd0.lcd_hv_if_reg.write(|w| unsafe { w.bits(0 << 28) });
+    lcd0.lcd_dclk_reg
+        .write(|w| unsafe { w.bits((0b1001 << 28) | (6 << 0)) });
     lcd0.lcd_basic0_reg
         .write(|w| unsafe { w.bits(((RES_X - 1) << 16) | ((RES_Y - 1) << 0)) });
     lcd0.lcd_basic1_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC1_REG.HT=530 for 531 horizontal clocks total
-            ((RES_X + 48) << 16)
+            ((RES_X + 58) << 16)
         // LCD_BASIC1_REG.HBP=42 for 43 Thbp
-        | (42 << 0),
+        | (52 << 0),
         )
     });
     lcd0.lcd_basic2_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC2_REG.VT=584 for 292 vertical rows total
-            (((RES_Y + 15)*2) << 16)
+            (((RES_Y + 21)*2) << 16)
         // LCD_BASIC2_REG.VBP=11 for 12 Tvbp
-        | (11 << 0),
+        | (17 << 0),
         )
     });
     lcd0.lcd_basic3_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC3_REG.HSPW=3 for 4 DCLK wide HSYNC pulse
-            (9 << 16)
+            (3 << 16)
         // LCD_BASIC3_REG.VSPW=3 for 4 row long VSYNC pulse
-        | (9 << 0),
+        | (3 << 0),
         )
     });
     lcd0.lcd_io_tri_reg.write(|w| unsafe {

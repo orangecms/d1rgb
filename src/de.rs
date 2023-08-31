@@ -1,4 +1,7 @@
 #![allow(dead_code)]
+const RES_X: u32 = 1024;
+const RES_Y: u32 = 600;
+const RESOLUTION: u32 = ((RES_Y - 1) << 16) | ((RES_X - 1) << 0);
 
 const DE_BASE: u32 = 0x0500_0000;
 const DE_SCLK_GATE: u32 = DE_BASE + 0x000;
@@ -99,7 +102,10 @@ pub unsafe fn init(fb: &[u8]) {
     // Enable RT
     write_volatile(DE_M0_GLB_CTL as *mut u32, 1);
     // Set height=272 and width=480
-    write_volatile(DE_M0_GLB_SIZE as *mut u32, (271 << 16) | (479 << 0));
+    write_volatile(
+        DE_M0_GLB_SIZE as *mut u32,
+        ((RES_Y - 1) << 16) | ((RES_X - 1) << 0),
+    );
 
     // Set OVL_UI1_L0 to alpha=FF, top-addr-only, no-premult, BGR888, no fill, global alpha, enable
     // NB not sure why BGR is required, since data is in RGB...??
@@ -108,30 +114,30 @@ pub unsafe fn init(fb: &[u8]) {
         (0xFF << 24) | (0 << 23) | (0 << 16) | (0x09 << 8) | (0 << 4) | (1 << 1) | (1 << 0),
     );
     // Set OVL_UI1_L0 to height=272 width=480
-    write_volatile(DE_M0_UI1_MBSIZE_L0 as *mut u32, (271 << 16) | (479 << 0));
+    write_volatile(DE_M0_UI1_MBSIZE_L0 as *mut u32, RESOLUTION);
     // Set OVL_UI1_L0 coordinate to 0, 0
     write_volatile(DE_M0_UI1_COOR_L0 as *mut u32, (0 << 16) | (0 << 0));
-    // Set OVL_UI1_L0 pitch to 480*3 bytes/line.
-    write_volatile(DE_M0_UI1_PITCH_L0 as *mut u32, 480 * 3);
+    // Set OVL_UI1_L0 pitch to RES_X*3 bytes/line.
+    write_volatile(DE_M0_UI1_PITCH_L0 as *mut u32, RES_X * 3);
     // Set memory start address
     write_volatile(DE_M0_UI1_TOP_LADD_L0 as *mut u32, fb.as_ptr() as u32);
     write_volatile(DE_M0_UI1_TOP_HADD as *mut u32, 0);
-    // Set overlay to 272x480
-    write_volatile(DE_M0_UI1_SIZE as *mut u32, (271 << 16) | (479 << 0));
+    // Set overlay to resolution
+    write_volatile(DE_M0_UI1_SIZE as *mut u32, RESOLUTION);
 
     write_volatile(DE_M0_BLD_BK_COLOR as *mut u32, 0x55aa77ee);
 
     // Enable Pipe0, no fill
     write_volatile(DE_M0_BLD_FILL_COLOR_CTL as *mut u32, 1 << 8);
-    // Pipe0 Input size 272x480
-    write_volatile(DE_M0_BLD_CH_ISIZE_P0 as *mut u32, (271 << 16) | (479 << 0));
-    // Pipe 0 offset apparently needs to be 271,479? Not sure why.
-    write_volatile(DE_M0_BLD_CH_OFFSET_P0 as *mut u32, (271 << 16) | (479 << 0));
+    // Pipe0 Input size
+    write_volatile(DE_M0_BLD_CH_ISIZE_P0 as *mut u32, RESOLUTION);
+    // Pipe 0 offset apparently needs to be resolution? Not sure why.
+    write_volatile(DE_M0_BLD_CH_OFFSET_P0 as *mut u32, RESOLUTION);
     // Pipe 0 select from channel 1, pipe 1 from 0, pipe 2 from 2, pipe 3 from 3
     write_volatile(
         DE_M0_BLD_CH_RTCTL as *mut u32,
         (3 << 12) | (2 << 8) | (0 << 4) | (1 << 0),
     );
-    // Output size 272x480
-    write_volatile(DE_M0_BLD_SIZE as *mut u32, (271 << 16) | (479 << 0));
+    // Output size
+    write_volatile(DE_M0_BLD_SIZE as *mut u32, RESOLUTION);
 }
