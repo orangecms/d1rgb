@@ -201,7 +201,7 @@ fn main() -> ! {
         | (20 << 4)
         // LCD_CTL_REG.LCD_SRC_SEL=000 for Display Engine source.
         // Try 0b001 for color check or 0b111 for grid check.
-        | (0b001 << 0),
+        | (0b000 << 0),
         )
     });
     // LCD_HV_IF_REG.HV_MODE=0 for 24bit/cycle parallel mode.
@@ -253,67 +253,10 @@ fn main() -> ! {
         );
     }
     unsafe { de::init(&FB.0) };
-    /*
-    // Configure LEDC
-    let ledc = &p.LEDC;
-    ledc.led_t01_timing_ctrl.write(|w| unsafe {
-        w.t1h_time()
-            .bits(0x14)
-            .t1l_time()
-            .bits(0x06)
-            .t0h_time()
-            .bits(0x07)
-            .t0l_time()
-            .bits(0x13)
-    });
-    ledc.ledc_data_finish_cnt
-        .write(|w| unsafe { w.led_wait_data_time().bits(0x1D4C) });
-    ledc.led_reset_timing_ctrl
-        .write(|w| unsafe { w.tr_time().bits(0x1D4C).led_num().bits(0) });
-    ledc.ledc_wait_time0_ctrl
-        .write(|w| unsafe { w.wait_tim0_en().set_bit().total_wait_time0().bits(0xFF) });
-    ledc.ledc_dma_ctrl.write(|w| w.ledc_dma_en().clear_bit());
-    ledc.ledc_int_ctrl.write(|w| w.global_int_en().clear_bit());
-    ledc.ledc_ctrl.write(|w| unsafe {
-        w.total_data_length()
-            .bits(1)
-            .led_rgb_mode()
-            .grb()
-            .led_msb_top()
-            .msb()
-            .led_msb_g()
-            .msb()
-            .led_msb_r()
-            .msb()
-            .led_msb_b()
-            .msb()
-    });
-    set_led(ledc, 0x0000_00FF);
-    */
-    // Blink LED
     loop {
         unsafe {
-            riscv::asm::delay(100_000_000);
+            riscv::asm::delay(1_000_000_000);
             println!("...");
         }
-        /*
-        unsafe {
-            gpio.pc_dat.write(|w| w.bits(2));
-            set_led(ledc, 0x0000FFFF);
-            riscv::asm::delay(100_000_000);
-
-            gpio.pc_dat.write(|w| w.bits(0));
-            set_led(ledc, 0x00FF00FF);
-            riscv::asm::delay(100_000_000);
-        }
-        */
     }
-}
-
-fn set_led(ledc: &d1_pac::LEDC, rgb: u32) {
-    ledc.ledc_ctrl.modify(|_, w| w.ledc_soft_reset().set_bit());
-    ledc.ledc_data.write(|w| unsafe { w.bits(rgb) });
-    ledc.ledc_ctrl
-        .modify(|_, w| w.ledc_en().enable().reset_led_en().set_bit());
-    while ledc.ledc_ctrl.read().reset_led_en().bit_is_set() {}
 }

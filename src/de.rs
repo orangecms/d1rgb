@@ -59,9 +59,9 @@ const DE_M0_UI1_TOP_HADD: u32 = DE_M0_OVL_UI1 + 0x080;
 const DE_M0_UI1_BOT_HADD: u32 = DE_M0_OVL_UI1 + 0x084;
 const DE_M0_UI1_SIZE: u32 = DE_M0_OVL_UI1 + 0x088;
 const DE_M0_BLD_FILL_COLOR_CTL: u32 = DE_M0_BLD + 0x000;
-const DE_M0_BLD_FILL_COLOR_P0: u32 = DE_M0_BLD + 0x004 + 0 * 0x14;
-const DE_M0_BLD_CH_ISIZE_P0: u32 = DE_M0_BLD + 0x008 + 0 * 0x14;
-const DE_M0_BLD_CH_OFFSET_P0: u32 = DE_M0_BLD + 0x008 + 0 * 0x14;
+const DE_M0_BLD_FILL_COLOR_P0: u32 = DE_M0_BLD + 0x004 + 0 * 0x10;
+const DE_M0_BLD_CH_ISIZE_P0: u32 = DE_M0_BLD + 0x008 + 0 * 0x10;
+const DE_M0_BLD_CH_OFFSET_P0: u32 = DE_M0_BLD + 0x00C + 0 * 0x10;
 const DE_M0_BLD_CH_RTCTL: u32 = DE_M0_BLD + 0x080;
 const DE_M0_BLD_PREMUL_CTL: u32 = DE_M0_BLD + 0x084;
 const DE_M0_BLD_BK_COLOR: u32 = DE_M0_BLD + 0x088;
@@ -125,14 +125,18 @@ pub unsafe fn init(fb: &[u8]) {
     // Set overlay to resolution
     write_volatile(DE_M0_UI1_SIZE as *mut u32, RESOLUTION);
 
-    write_volatile(DE_M0_BLD_BK_COLOR as *mut u32, 0x55aa77ee);
+    // write_volatile(DE_M0_OVL_V_FILL_COLOR as *mut u32, 0x55aa77ee);
+    // write_volatile(DE_M0_BLD_BK_COLOR as *mut u32, 0x55aa77ee);
+    // write_volatile(DE_M0_BLD_FILL_COLOR_P0 as *mut u32, 0x55aa77ee);
 
     // Enable Pipe0, no fill
     write_volatile(DE_M0_BLD_FILL_COLOR_CTL as *mut u32, 1 << 8);
     // Pipe0 Input size
-    write_volatile(DE_M0_BLD_CH_ISIZE_P0 as *mut u32, RESOLUTION);
-    // Pipe 0 offset apparently needs to be resolution? Not sure why.
-    write_volatile(DE_M0_BLD_CH_OFFSET_P0 as *mut u32, RESOLUTION);
+    write_volatile(
+        DE_M0_BLD_CH_ISIZE_P0 as *mut u32,
+        (RES_Y * 2 - 1) << 16 | (RES_X * 2 - 1),
+    );
+    write_volatile(DE_M0_BLD_CH_OFFSET_P0 as *mut u32, 0);
     // Pipe 0 select from channel 1, pipe 1 from 0, pipe 2 from 2, pipe 3 from 3
     write_volatile(
         DE_M0_BLD_CH_RTCTL as *mut u32,
