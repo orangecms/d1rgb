@@ -201,7 +201,7 @@ fn main() -> ! {
         | (20 << 4)
         // LCD_CTL_REG.LCD_SRC_SEL=000 for Display Engine source.
         // Try 0b001 for color check or 0b111 for grid check.
-        | (0b000 << 0),
+        | (0b001 << 0),
         )
     });
     // LCD_HV_IF_REG.HV_MODE=0 for 24bit/cycle parallel mode.
@@ -213,14 +213,14 @@ fn main() -> ! {
     lcd0.lcd_basic1_reg.write(|w| unsafe {
         w.bits(
             // LCD_BASIC1_REG.HT=530 for 531 horizontal clocks total
-            ((RES_X + 58) << 16)
+            ((RES_X + 158) << 16)
         // LCD_BASIC1_REG.HBP=42 for 43 Thbp
         | (52 << 0),
         )
     });
     lcd0.lcd_basic2_reg.write(|w| unsafe {
         w.bits(
-            // LCD_BASIC2_REG.VT=584 for 292 vertical rows total
+            // LCD_BASIC2_REG.VT=VT_COUNT for VT_COUNT/2 vertical rows total
             (((RES_Y + 21)*2) << 16)
         // LCD_BASIC2_REG.VBP=11 for 12 Tvbp
         | (17 << 0),

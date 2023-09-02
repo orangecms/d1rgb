@@ -107,11 +107,17 @@ pub unsafe fn init(fb: &[u8]) {
         ((RES_Y - 1) << 16) | ((RES_X - 1) << 0),
     );
 
-    // Set OVL_UI1_L0 to alpha=FF, top-addr-only, no-premult, BGR888, no fill, global alpha, enable
-    // NB not sure why BGR is required, since data is in RGB...??
+    // Set OVL_UI1_L0 to
+    //    alpha=FF
+    //    top-addr-only
+    //    no-premult
+    //    RGB888
+    //    no fill
+    //    global alpha
+    //    enable
     write_volatile(
         DE_M0_UI1_ATTCTL_L0 as *mut u32,
-        (0xFF << 24) | (0 << 23) | (0 << 16) | (0x09 << 8) | (0 << 4) | (1 << 1) | (1 << 0),
+        (0xFF << 24) | (0 << 23) | (0 << 16) | (0x08 << 8) | (0 << 4) | (1 << 1) | (1 << 0),
     );
     // Set OVL_UI1_L0 to height=272 width=480
     write_volatile(DE_M0_UI1_MBSIZE_L0 as *mut u32, RESOLUTION);
@@ -134,7 +140,7 @@ pub unsafe fn init(fb: &[u8]) {
     // Pipe0 Input size
     write_volatile(
         DE_M0_BLD_CH_ISIZE_P0 as *mut u32,
-        (RES_Y * 2 - 1) << 16 | (RES_X * 2 - 1),
+        ((RES_Y + 1) << 16) | (RES_X - 1),
     );
     write_volatile(DE_M0_BLD_CH_OFFSET_P0 as *mut u32, 0);
     // Pipe 0 select from channel 1, pipe 1 from 0, pipe 2 from 2, pipe 3 from 3
